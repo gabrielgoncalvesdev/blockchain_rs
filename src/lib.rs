@@ -5,4 +5,4 @@ mod blockchain;
 // Exportar módulos publicamente 
 pub use block::Block;
 pub use error::BlockchainError;
-pub use blockchain::Blockchain;
+pub use blockchain::{Blockchain, current_timestamp};

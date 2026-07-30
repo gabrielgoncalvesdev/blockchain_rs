@@ -1,5 +1,7 @@
 use crate::block::Block;
 use crate::error::BlockchainError;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 
 pub struct Blockchain {
     pub blocks: Vec<Block>,
@@ -7,20 +9,19 @@ pub struct Blockchain {
 }
 
 impl Blockchain {
-    pub fn new(difficulty: usize) -> Self {
-        let genesis = Block::new(0, 1690000000, "Genesis Block".into(), "0".into(), difficulty);
+    pub fn new(difficulty: usize, timestamp: u64) -> Self {
+        let genesis = Block::new(0, timestamp, "Genesis Block".into(), "0".into(), difficulty);
         Blockchain {
             blocks: vec![genesis],
             difficulty,
         }
     }
 
-    pub fn add_block(&mut self, data: String) {
+    pub fn add_block(&mut self, data: String, timestamp: u64) {
         let difficulty = self.difficulty;
         let previous = self.blocks.last().expect("Blockchain should have at least one block");
         let new_index = previous.index + 1;
-        let new_timestamp = previous.timestamp + 100; // timestamp temporary fake 
-        let block = Block::new(new_index, new_timestamp, data, previous.hash.clone(), difficulty);
+        let block = Block::new(new_index, timestamp, data, previous.hash.clone(), difficulty);
         self.blocks.push(block);
     }
 
@@ -49,3 +50,11 @@ impl Blockchain {
         Ok(())
     }
 }
+
+/// Retornar o Unix time atual em segundos
+    pub fn current_timestamp() -> u64 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Not possible to get the timestamp before the UNIX_EPOCH (1970-01-01 00:00:00 UTC)")
+            .as_secs()
+    }
