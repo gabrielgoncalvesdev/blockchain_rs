@@ -2,12 +2,15 @@ use blockchain_rs::{Blockchain, current_timestamp};
 
 
 fn main() {
-    let mut blockchain = Blockchain::new(3, current_timestamp());
+    let mut blockchain = Blockchain::new(3, 10, current_timestamp());
     blockchain.add_block("Alice pays Bob 10 BTC".into(), current_timestamp());
     blockchain.add_block("bob pays gabriel 100 BTC".into(), current_timestamp());
 
     for block in &blockchain.blocks {
-        println!("{block:?}");
+        println!(
+            "#{} dif={} nonce={} hash={}",
+            block.index, block.difficulty, block.nonce, block.hash
+        );
     }
 
     match blockchain.validate() {

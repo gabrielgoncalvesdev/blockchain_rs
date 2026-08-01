@@ -8,6 +8,7 @@ pub struct Block {
     pub previous_hash: String,
     pub hash: String,
     pub nonce: u64,
+    pub difficulty: usize,
 }
 
 impl Block {
@@ -19,20 +20,21 @@ impl Block {
             previous_hash,
             hash: String::new(),
             nonce: 0,
+            difficulty,
         };
-        block.mine(difficulty);
+        block.mine();
         block
     }
     fn calculate_hash(&self) -> String {
-        let input = format!("{}|{}|{}|{}|{}", 
-    self.index, self.timestamp, self.data, self.previous_hash, self.nonce); 
+        let input = format!("{}|{}|{}|{}|{}|{}", 
+    self.index, self.timestamp, self.data, self.previous_hash, self.nonce, self.difficulty); 
         let mut hasher = Sha256::new();
         hasher.update(input.as_bytes());
         hasher.finalize().iter().map(|b| format!("{:02x}", b)).collect()
     }
 
-    fn mine(&mut self, difficulty: usize) {
-        let target = "0".repeat(difficulty);
+    fn mine(&mut self) {
+        let target = "0".repeat(self.difficulty);
         loop {
             self.hash = self.calculate_hash();
             if self.hash.starts_with(&target) {
@@ -46,8 +48,8 @@ impl Block {
         self.hash == self.calculate_hash()
     }
 
-    pub fn meets_difficulty(&self, difficulty: usize) -> bool {
-        self.hash.starts_with(&"0".repeat(difficulty))
+    pub fn meets_difficulty(&self) -> bool {
+        self.hash.starts_with(&"0".repeat(self.difficulty))
     }
 }
 
@@ -61,6 +63,6 @@ mod tests {
         // está NO MESMO módulo. Isso é O motivo de unit tests ficarem no arquivo.
         let block = Block::new(0, 1690000000, "test".into(), "0".into(), 1);
         assert_eq!(block.calculate_hash(), block.calculate_hash());
-        assert!(block.meets_difficulty(1));
+        assert!(block.meets_difficulty());
     }
 }

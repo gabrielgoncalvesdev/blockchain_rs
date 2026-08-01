@@ -1,28 +1,43 @@
 use crate::block::Block;
 use crate::error::BlockchainError;
+use core::time;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+const MIN_DIFFICULTY: usize = 1;
 
 pub struct Blockchain {
     pub blocks: Vec<Block>,
-    pub difficulty: usize,
+    target_block_time: u64,
 }
 
 impl Blockchain {
-    pub fn new(difficulty: usize, timestamp: u64) -> Self {
-        let genesis = Block::new(0, timestamp, "Genesis Block".into(), "0".into(), difficulty);
+    pub fn new(initial_difficulty: usize, target_block_time: u64, timestamp: u64, ) -> Self {
+        let genesis = Block::new(0, timestamp, "Genesis Block".into(), "0".into(), initial_difficulty);
         Blockchain {
             blocks: vec![genesis],
-            difficulty,
+            target_block_time,
         }
     }
 
     pub fn add_block(&mut self, data: String, timestamp: u64) {
-        let difficulty = self.difficulty;
+        let difficulty = self.next_difficulty(timestamp);
         let previous = self.blocks.last().expect("Blockchain should have at least one block");
         let new_index = previous.index + 1;
         let block = Block::new(new_index, timestamp, data, previous.hash.clone(), difficulty);
         self.blocks.push(block);
+    }
+
+    pub fn next_difficulty(&self, new_timestamp: u64) -> usize {
+        let last  = self.blocks.last().expect("Blockchain should have at leat one block");
+        let elapsed = new_timestamp.saturating_sub(last.timestamp);
+
+        if elapsed < self.target_block_time {
+            last.difficulty + 1
+        } else if elapsed > self.target_block_time {
+            last.difficulty.saturating_sub(1).max(MIN_DIFFICULTY)
+        } else {
+            last.difficulty
+        }
     }
 
     pub fn validate(&self) -> Result<(), BlockchainError> {
@@ -30,8 +45,8 @@ impl Blockchain {
         if !genesis.has_valid_hash() {
             return Err(BlockchainError::InvalidHash { index: genesis.index });
         }
-        if !genesis.meets_difficulty(self.difficulty) {
-            return Err(BlockchainError::InsufficientWork { index: genesis.index, difficulty: self.difficulty });
+        if !genesis.meets_difficulty() {
+            return Err(BlockchainError::InsufficientWork { index: genesis.index, difficulty: genesis.difficulty });
         }
 
         for pair in self.blocks.windows(2) {
@@ -40,8 +55,8 @@ impl Blockchain {
             if !current.has_valid_hash() {
                 return Err(BlockchainError::InvalidHash { index: current.index });
             }
-            if !current.meets_difficulty(self.difficulty) {
-                return Err(BlockchainError::InsufficientWork { index: current.index, difficulty: self.difficulty })
+            if !current.meets_difficulty() {
+                return Err(BlockchainError::InsufficientWork { index: current.index, difficulty: current.difficulty })
             }
             if current.previous_hash != previous.hash {
                 return Err(BlockchainError::BrokenChain { index: current.index, previous_index: previous.index });
