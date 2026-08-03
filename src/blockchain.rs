@@ -1,10 +1,12 @@
 use crate::block::Block;
 use crate::error::BlockchainError;
 use crate::transaction::Transaction;
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const MIN_DIFFICULTY: usize = 1;
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
     target_block_time: u64,
