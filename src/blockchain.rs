@@ -1,6 +1,6 @@
 use crate::block::Block;
 use crate::error::BlockchainError;
-use core::time;
+use crate::transaction::Transaction;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const MIN_DIFFICULTY: usize = 1;
@@ -12,18 +12,18 @@ pub struct Blockchain {
 
 impl Blockchain {
     pub fn new(initial_difficulty: usize, target_block_time: u64, timestamp: u64, ) -> Self {
-        let genesis = Block::new(0, timestamp, "Genesis Block".into(), "0".into(), initial_difficulty);
+        let genesis = Block::new(0, timestamp, Vec::new(),  "0".into(), initial_difficulty);
         Blockchain {
             blocks: vec![genesis],
             target_block_time,
         }
     }
 
-    pub fn add_block(&mut self, data: String, timestamp: u64) {
+    pub fn add_block(&mut self, transactions: Vec<Transaction>, timestamp: u64) {
         let difficulty = self.next_difficulty(timestamp);
         let previous = self.blocks.last().expect("Blockchain should have at least one block");
         let new_index = previous.index + 1;
-        let block = Block::new(new_index, timestamp, data, previous.hash.clone(), difficulty);
+        let block = Block::new(new_index, timestamp, transactions, previous.hash.clone(), difficulty);
         self.blocks.push(block);
     }
 

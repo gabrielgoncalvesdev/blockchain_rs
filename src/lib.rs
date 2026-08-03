@@ -2,8 +2,10 @@
 mod block;
 mod error;
 mod blockchain;
+mod transaction;
 
 // Exportar módulos publicamente e informações internar públicas dele para que possam ser usados externamente
 pub use block::Block;
 pub use error::BlockchainError;
 pub use blockchain::{Blockchain, current_timestamp};
+pub use transaction::Transaction;

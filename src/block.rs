@@ -1,10 +1,11 @@
 use sha2::{Digest, Sha256};
+use crate::transaction::Transaction;
 
 #[derive(Debug)]
 pub struct Block {
     pub index: u64,
     pub timestamp: u64,
-    pub data: String,
+    pub transactions: Vec<Transaction>,
     pub previous_hash: String,
     pub hash: String,
     pub nonce: u64,
@@ -12,11 +13,11 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(index: u64, timestamp: u64, data: String, previous_hash: String, difficulty: usize) -> Self {
+    pub fn new(index: u64, timestamp: u64, transactions: Vec<Transaction>, previous_hash: String, difficulty: usize) -> Self {
         let mut block = Block {
             index,
             timestamp,
-            data,
+            transactions,
             previous_hash,
             hash: String::new(),
             nonce: 0,
@@ -26,8 +27,11 @@ impl Block {
         block
     }
     fn calculate_hash(&self) -> String {
+        let txs = serde_json::to_string(&self.transactions).
+        expect("Failed to serialize transactions");
+
         let input = format!("{}|{}|{}|{}|{}|{}", 
-    self.index, self.timestamp, self.data, self.previous_hash, self.nonce, self.difficulty); 
+    self.index, self.timestamp, txs, self.previous_hash, self.nonce, self.difficulty); 
         let mut hasher = Sha256::new();
         hasher.update(input.as_bytes());
         hasher.finalize().iter().map(|b| format!("{:02x}", b)).collect()
@@ -61,7 +65,8 @@ mod tests {
     fn calculate_hash_e_deterministico() {
         // Só consigo chamar calculate_hash() (privado) porque o teste
         // está NO MESMO módulo. Isso é O motivo de unit tests ficarem no arquivo.
-        let block = Block::new(0, 1690000000, "test".into(), "0".into(), 1);
+        let txs = vec![Transaction::new("Alice", "Bob", 100)];
+        let block = Block::new(0, 1690000000, txs, "0".into(), 1);
         assert_eq!(block.calculate_hash(), block.calculate_hash());
         assert!(block.meets_difficulty());
     }
