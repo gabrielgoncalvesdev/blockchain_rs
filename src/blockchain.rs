@@ -1,3 +1,4 @@
+use crate::hash::Hash;
 use crate::block::Block;
 use crate::error::BlockchainError;
 use crate::transaction::Transaction;
@@ -14,18 +15,19 @@ pub struct Blockchain {
 
 impl Blockchain {
     pub fn new(initial_difficulty: usize, target_block_time: u64, timestamp: u64, ) -> Self {
-        let genesis = Block::new(0, timestamp, Vec::new(),  "0".into(), initial_difficulty);
+        let genesis = Block::new(0, timestamp, Vec::new(),  Hash::ZERO, initial_difficulty, 1);
         Blockchain {
             blocks: vec![genesis],
             target_block_time,
         }
     }
 
-    pub fn add_block(&mut self, transactions: Vec<Transaction>, timestamp: u64) {
+    pub fn add_block(&mut self, transactions: Vec<Transaction>, timestamp: u64, threads: usize) {
         let difficulty = self.next_difficulty(timestamp);
         let previous = self.blocks.last().expect("Blockchain should have at least one block");
         let new_index = previous.index + 1;
-        let block = Block::new(new_index, timestamp, transactions, previous.hash.clone(), difficulty);
+        let previous_hash = previous.hash;
+        let block = Block::new(new_index, timestamp, transactions, previous_hash, difficulty, threads);
         self.blocks.push(block);
     }
 
@@ -73,5 +75,5 @@ impl Blockchain {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Not possible to get the timestamp before the UNIX_EPOCH (1970-01-01 00:00:00 UTC)")
-            .as_secs()
+            .as_millis() as u64
     }
